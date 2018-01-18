@@ -2,35 +2,31 @@
 Ambient Lighting for the Philips Hue Bridge on Linux
 
 ## Description
-There's [ScreenBloom] for Windows and MAC systems, but I wanted
-something similar for my Linux installation. The color averaging for the
-ambient light probably works slightly differently, but I quite like it.
+There's [ScreenBloom] for Windows and MAC systems, but I wanted something similar for my Linux installation. The color
+averaging for the ambient light probably works slightly differently (simply the average of each color channel).
 
-This isn't supposed to be perfect, I just made it for myself. I decided
-to share it because some people asked around for something like this. If
-the dependency on PyQt5 is acceptable, it could also easily be used to
-add Linux support to the [ScreenBloom] project.
+This isn't supposed to be perfect, I just made it for myself. I decided to share it because some people asked around for
+something like this (mostly on the ScreenBloom issue tracker). If the dependency on PyQt5 is acceptable, it could also
+be used to easily add support for Linux to the ScreenBloom project.
+
+PyQt5 is currently a hard dependency because its really fast and no other screenshot providers are implemented.
+
+## Installation
+Run `$ pip install https://github.com/cryzed/Amby/archive/master.zip`, preferably in a virtual environment or with
+`--user` and _not_ as root (despite what you might have read).
 
 ## Usage
-Start the script like this:
+Run Amby like this: `$ amby <bridge_address> <lights>`
 
-`$ ./amby <bridge_address> <lights> --username <username>`
+Where `bridge_address` is the domain or IP address of the bridge and `lights` a space-separated list of light indices
+that should be controlled by Amby.
 
-A sample invocation might look like this:
-
-`$ ./amby 192.168.0.75 1 2 -i 0.1 -u 5cD432afGbApMvn68xoCardNCcDKfNKejuByuZkU`
-
-If initially no Philips Hue Bridge username is specified
-(omit `-u/--username`), the script will prompt you to create one. You can
-then use the generated username in subsequent invocations. Use the
-`-h/--help` option for more options.
+When initially starting, Amby will prompt you to create a username to authenticate with the Philips Hue Bridge. Use the
+`-h/--help` option to see all available options and their descriptions.
 
 ## Requirements
 * Python 3.6+
-* numpy
-* qhue
-* rgbxy
-* PyQt5
+* Python modules: qhue, numpy, appdirs, rgbxy, PyQt5
 
 
 [ScreenBloom]: https://github.com/kershner/screenBloom
