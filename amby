@@ -78,8 +78,8 @@ def main(arguments):
             color = tuple(max(component, 10 ** -3) for component in color)
 
             if color != previous_color:
+                new_state = {'xy': color_converter.rgb_to_xy(*color)}
                 for light in arguments.lights:
-                    new_state = {'xy': color_converter.rgb_to_xy(*color)}
                     try:
                         bridge.lights[light].state(**new_state)
                     except QhueException as exception:
