@@ -85,7 +85,7 @@ def main(arguments):
                     except QhueException as exception:
                         print(f'Exception occurred while changing the state for light #{light}: {exception}',
                               file=sys.stderr)
-            previous_color = color
+                previous_color = color
 
             if not arguments.loop:
                 break
