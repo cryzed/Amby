@@ -16,6 +16,10 @@ Start the script like this:
 
 `$ ./amby <bridge_address> <lights> --username <username>`
 
+A sample invocation might look like this:
+
+`$ ./amby 192.168.0.75 1 2 -i 0.1 -u 5cD432afGbApMvn68xoCardNCcDKfNKejuByuZkU`
+
 If initially no Philips Hue Bridge username is specified
 (omit `-u/--username`), the script will prompt you to create one. You can
 then use the generated username in subsequent invocations. Use the
