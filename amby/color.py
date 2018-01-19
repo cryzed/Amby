@@ -8,7 +8,7 @@ except ImportError:
     PyQt5 = None
 
 # https://en.wikipedia.org/wiki/Relative_luminance
-_luminance_vector = np.array([0.2126, 0.7152, 0.0722])
+_luminance_multipliers = np.array([0.2126, 0.7152, 0.0722])
 _last_image_reference = None
 
 
@@ -53,7 +53,7 @@ def get_average_brightest_color(screen=None, region=None, percentage=10):
     data = _get_color_data(screen, region)
 
     # Calculate luminance for each color and sort data accordingly
-    luminance = np.argsort(np.dot(data, _luminance_vector))
+    luminance = np.argsort(np.dot(data, _luminance_multipliers))
     data = data[luminance]
 
     # TODO: Use percentile index instead?
