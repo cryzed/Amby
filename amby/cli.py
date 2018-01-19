@@ -7,9 +7,9 @@ import time
 import qhue
 from qhue import QhueException
 
-from amby.color import get_average_brightest_color, get_average_color
-from amby.constants import SUCCESS_EXIT_CODE, FAILURE_EXIT_CODE
-from amby.utils import rgb_to_xy, get_saved_username, save_username
+from amby.color import get_average_color, get_pixel_data, get_relative_brightness
+from amby.constants import SUCCESS_EXIT_CODE, FAILURE_EXIT_CODE, PHILIPS_MAX_BRIGHTNESS, PHILIPS_MIN_BRIGHTNESS
+from amby.utils import get_saved_username, save_username, rgb_to_xy
 
 argument_parser = argparse.ArgumentParser()
 argument_parser.add_argument('bridge_address', help='The domain or IP address of the Philips Hue Bridge')
@@ -27,13 +27,20 @@ argument_parser.add_argument(
     help='The interval to wait before calculating and setting the ambient color again')
 argument_parser.add_argument('--run-once', '-o', action='store_true', help='Set the ambient color once and exit')
 argument_parser.add_argument(
-    '--mode', '-m', choices=['average', 'luminance'], default='average',
-    help='Specify the way the ambient color should be calculated. "average" calculates the average color of all pixels,'
-         'while "luminance" averages the a given percentage of the brightest colors found (adjustable using '
-         '--luminance-percentage).')
-argument_parser.add_argument(
     '--luminance-percentage', '-l', type=float, default='10',
     help='Specify which percentage of brightest colors to average in luminance mode')
+argument_parser.add_argument(
+    '--change-brightness', '-b', action='store_true',
+    help='Adjust brightness of lights based on the overall relative luminance of the specified region. '
+         'Very CPU intensive!')
+argument_parser.add_argument(
+    '--min-brightness', '-m', type=float, default=50, help='Minimum brightness in percent')
+argument_parser.add_argument(
+    '--max-brightness', '-M', type=float, default=100, help='Maximum brightness in percent')
+argument_parser.add_argument(
+    '--dont-ignore-black', '-B', dest='ignore_black', action='store_false',
+    help="Don't ignore absolutely black pixels. Absolutely black pixels are ignored by default because of the black "
+         "bars added by video players if the aspect ratio doesn't match, which skews the results")
 
 
 def stderr(*args, **kwargs):
@@ -59,33 +66,32 @@ def _main(arguments):
         if username is None:
             return FAILURE_EXIT_CODE
         save_username(username)
-
     bridge = qhue.Bridge(arguments.bridge_address, username)
 
-    def change_light_states(**kwargs):
+    def change_light_states(state):
         for light in arguments.lights:
             try:
-                bridge.lights[light].state(**kwargs)
+                bridge.lights[light].state(**state)
             except QhueException as exception:
                 stderr(f'Exception occurred while controlling light #{light}: {exception}')
 
-    # Create closures here so we don't have to constantly do useless string comparisons
-    if arguments.mode == 'average':
-        def calculate_color():
-            return get_average_color(arguments.screen)
-    else:
-        def calculate_color():
-            return get_average_brightest_color(arguments.screen, percentage=arguments.luminance_percentage)
-
     previous_color = None
+    min_brightness = max(PHILIPS_MIN_BRIGHTNESS, int(round(arguments.min_brightness / 100 * PHILIPS_MAX_BRIGHTNESS)))
+    max_brightness = min(PHILIPS_MAX_BRIGHTNESS, int(round(arguments.max_brightness / 100 * PHILIPS_MAX_BRIGHTNESS)))
     if not arguments.run_once:
         print(f'Running, press Ctrl+C to stop Amby.')
+
     try:
         while True:
-            color = calculate_color()
+            data = get_pixel_data(arguments.screen)
+            color = get_average_color(data)
             if color != previous_color:
-                change_light_states(xy=rgb_to_xy(*color))
-                previous_color = color
+                state = {'xy': rgb_to_xy(*color)}
+                if arguments.change_brightness:
+                    state['bri'] = max(
+                        min_brightness,
+                        int(round(get_relative_brightness(data, arguments.ignore_black) * max_brightness)))
+                change_light_states(state)
 
             if arguments.run_once:
                 break

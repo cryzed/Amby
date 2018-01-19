@@ -1,5 +1,7 @@
 import numpy as np
 
+from amby.constants import PHILIPS_MAX_BRIGHTNESS
+
 try:
     import PyQt5
     from PyQt5.QtWidgets import QApplication
@@ -12,7 +14,7 @@ _luminance_multipliers = np.array([0.2126, 0.7152, 0.0722])
 _last_image_reference = None
 
 
-def _get_color_data_pyqt5(screen, region):
+def _get_pixel_data_pyqt5(screen, region):
     application = QApplication([])
     screen = application.primaryScreen() if screen is None else application.screens()[screen - 1]
     screen_size = screen.size()
@@ -33,31 +35,26 @@ def _get_color_data_pyqt5(screen, region):
     return np.fliplr(array[:, :-1])
 
 
-def _get_color_data(screen, region):
+def get_pixel_data(screen=None, region=None):
     if PyQt5:
-        return _get_color_data_pyqt5(screen, region)
+        return _get_pixel_data_pyqt5(screen, region)
     else:
         raise Exception('no screenshot provider available')
 
 
-def _calculate_average_color(data):
+def get_average_color(data):
     return tuple(np.average(data, axis=0).round().astype(int))
 
 
-def get_average_color(screen=None, region=None):
-    data = _get_color_data(screen, region)
-    return _calculate_average_color(data)
+def get_relative_brightness(data, ignore_black=False):
+    max_brightness = np.dot([255, 255, 255], _luminance_multipliers) * data.shape[0]
+    luminance = np.dot(data, _luminance_multipliers)
+    absolute_brightness = np.sum(luminance, axis=0)
 
+    if ignore_black:
+        # Act like absolutely black pixels have a neutral effect on the absolute brightness by multiplying their amount
+        # with half of the maximum brightness
+        black_pixels = data.shape[0] - np.count_nonzero(luminance)
+        absolute_brightness += PHILIPS_MAX_BRIGHTNESS / 2 * black_pixels
 
-def get_average_brightest_color(screen=None, region=None, percentage=10):
-    data = _get_color_data(screen, region)
-
-    # Calculate luminance for each color and sort data accordingly
-    luminance = np.argsort(np.dot(data, _luminance_multipliers))
-    data = data[luminance]
-
-    # TODO: Use percentile index instead?
-    count = data.shape[0]
-    percentage_index = max(1, int(round((percentage / 100 * count))))
-    brightest_colors = data[count - percentage_index:]
-    return _calculate_average_color(brightest_colors)
+    return absolute_brightness / max_brightness
