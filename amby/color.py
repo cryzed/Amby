@@ -11,6 +11,7 @@ except ImportError:
 
 # https://en.wikipedia.org/wiki/Relative_luminance
 _luminance_multipliers = np.array([0.2126, 0.7152, 0.0722])
+_max_luminance = np.dot([255, 255, 255], _luminance_multipliers)
 _last_image_reference = None
 
 
@@ -46,8 +47,8 @@ def get_average_color(data):
     return tuple(np.average(data, axis=0).round().astype(int))
 
 
-def get_relative_brightness(data, ignore_black=False):
-    max_brightness = np.dot([255, 255, 255], _luminance_multipliers) * data.shape[0]
+def get_relative_brightness(data, ignore_black):
+    max_brightness = _max_luminance * data.shape[0]
     luminance = np.dot(data, _luminance_multipliers)
     absolute_brightness = np.sum(luminance, axis=0)
 
