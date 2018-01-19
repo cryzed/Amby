@@ -55,9 +55,10 @@ def get_average_brightest_color(screen=None, region=None, percentage=10):
 
     # Calculate luminance for each color and sort data accordingly
     luminance = np.argsort(np.dot(data, _luminance_vector))
-    data = data[luminance[::-1]]
+    data = data[luminance]
 
     # TODO: Use percentile index instead?
-    percent_index = max(1, int(percentage / 100 * data.shape[0]))
-    brightest_colors = data[:percent_index]
+    count = data.shape[0]
+    percentage_index = max(1, int(percentage / 100 * count))
+    brightest_colors = data[count - percentage_index:]
     return _calculate_average_color(brightest_colors)
