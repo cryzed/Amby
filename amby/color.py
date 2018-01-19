@@ -7,8 +7,12 @@ try:
 except ImportError:
     PyQt5 = None
 
+# https://en.wikipedia.org/wiki/Relative_luminance
+_luminance_vector = np.array([0.2126, 0.7152, 0.0722])
+_last_image_reference = None
 
-def _get_average_color_pyqt5(screen, region):
+
+def _get_color_data_pyqt5(screen, region):
     application = QApplication([])
 
     screen = application.primaryScreen() if screen is None else application.screens()[screen - 1]
@@ -19,15 +23,41 @@ def _get_average_color_pyqt5(screen, region):
     # Data is stored as BGRA, despite image.format() claiming it is QImage.Format_RGB32
     pointer = image.constBits()
     data = pointer.asarray(image.byteCount())
+
     array = np.ndarray(shape=(image.byteCount() // 4, 4), dtype=np.ubyte, buffer=data)
 
-    # Ignore alpha channel, round all values, convert to integers and reverse order BGR -> RGB
-    average = np.average(array[:, :-1], axis=0).round().astype(int)[::-1]
-    return tuple(average)
+    # Ugly hack so the QImage isn't cleaned up by Python's garbage collector prematurely
+    global _last_image_reference
+    _last_image_reference = image
+
+    # Ignore alpha channel, and reverse order BGR -> RGB
+    return np.fliplr(array[:, :-1])
+
+
+def _get_color_data(screen, region):
+    if PyQt5:
+        return _get_color_data_pyqt5(screen, region)
+    else:
+        raise Exception('no screenshot provider available')
+
+
+def _calculate_average_color(data):
+    return tuple(np.average(data, axis=0).round().astype(int))
 
 
 def get_average_color(screen=None, region=None):
-    if PyQt5:
-        return _get_average_color_pyqt5(screen, region)
+    data = _get_color_data(screen, region)
+    return _calculate_average_color(data)
 
-    raise Exception('no screenshot provider available')
+
+def get_average_brightest_color(screen=None, region=None, percentage=10):
+    data = _get_color_data(screen, region)
+
+    # Calculate luminance for each color and sort data accordingly
+    luminance = np.argsort(np.dot(data, _luminance_vector))
+    data = data[luminance[::-1]]
+
+    # TODO: Use percentile index instead?
+    percent_index = max(1, int(percentage / 100 * data.shape[0]))
+    brightest_colors = data[:percent_index]
+    return _calculate_average_color(brightest_colors)
