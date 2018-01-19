@@ -14,7 +14,6 @@ _last_image_reference = None
 
 def _get_color_data_pyqt5(screen, region):
     application = QApplication([])
-
     screen = application.primaryScreen() if screen is None else application.screens()[screen - 1]
     screen_size = screen.size()
     region = region or (0, 0, screen_size.width(), screen_size.height())
@@ -24,8 +23,8 @@ def _get_color_data_pyqt5(screen, region):
     pointer = image.constBits()
     data = pointer.asarray(image.byteCount())
 
+    # Since the data is stored as BGRA there are 4 channels, with a single byte representing each one
     array = np.ndarray(shape=(image.byteCount() // 4, 4), dtype=np.ubyte, buffer=data)
-
     # Ugly hack so the QImage isn't cleaned up by Python's garbage collector prematurely
     global _last_image_reference
     _last_image_reference = image
@@ -59,6 +58,6 @@ def get_average_brightest_color(screen=None, region=None, percentage=10):
 
     # TODO: Use percentile index instead?
     count = data.shape[0]
-    percentage_index = max(1, int(percentage / 100 * count))
+    percentage_index = max(1, int(round((percentage / 100 * count))))
     brightest_colors = data[count - percentage_index:]
     return _calculate_average_color(brightest_colors)
