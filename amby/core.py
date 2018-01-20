@@ -1,4 +1,5 @@
 import numpy as np
+import rgbxy
 
 from amby.constants import PHILIPS_MAX_BRIGHTNESS
 
@@ -13,6 +14,7 @@ except ImportError:
 _luminance_multipliers = np.array([0.2126, 0.7152, 0.0722])
 _max_luminance = np.dot([255, 255, 255], _luminance_multipliers)
 _last_image_reference = None
+_color_converter = rgbxy.Converter()
 
 
 def _get_pixel_data_pyqt5(screen, region):
@@ -59,3 +61,10 @@ def get_relative_brightness(data, ignore_black):
         absolute_brightness += PHILIPS_MAX_BRIGHTNESS / 2 * black_pixels
 
     return absolute_brightness / max_brightness
+
+
+def rgb_to_xy(r, g, b):
+    # Prevent DivisionByZero exception in rgbxy library:
+    # https://github.com/benknight/hue-python-rgb-converter/issues/6
+    r, g, b = tuple(max(component, 10 ** -3) for component in (r, g, b))
+    return _color_converter.rgb_to_xy(r, g, b)

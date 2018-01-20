@@ -7,9 +7,9 @@ import time
 import qhue
 from qhue import QhueException
 
-from amby.color import get_average_color, get_pixel_data, get_relative_brightness
+from amby.config import get_saved_username, save_username
 from amby.constants import SUCCESS_EXIT_CODE, FAILURE_EXIT_CODE, PHILIPS_MAX_BRIGHTNESS, PHILIPS_MIN_BRIGHTNESS
-from amby.utils import get_saved_username, save_username, rgb_to_xy
+from amby.core import get_average_color, get_pixel_data, get_relative_brightness, rgb_to_xy
 
 argument_parser = argparse.ArgumentParser()
 argument_parser.add_argument('bridge_address', help='The domain or IP address of the Philips Hue Bridge')
