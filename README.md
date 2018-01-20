@@ -21,6 +21,14 @@ Run Amby like this: `$ amby <bridge_address> <lights>`
 Where `bridge_address` is the domain or IP address of the bridge and `lights` a space-separated list of light indices
 that should be controlled by Amby.
 
+A sample invocation might look like this:
+
+`$ amby 192.168.0.75 1 -b -m 50 -i 0`
+
+Meaning: "Contact the bridge at 192.168.0.75, set the ambient color for light 1, change the brightness to equal or
+greater than 50% of the maximum brightness (depending on the luminance of the calculated ambient color) and don't wait
+at all between iterations of this process (higher CPU usage!)."
+
 When initially starting, Amby will prompt you to create a username to authenticate with the Philips Hue Bridge. Use the
 `-h/--help` option to see all available options and their descriptions.
 
