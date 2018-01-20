@@ -1,8 +1,6 @@
 import numpy as np
 import rgbxy
 
-from amby.constants import PHILIPS_MAX_BRIGHTNESS
-
 try:
     import PyQt5
     from PyQt5.QtWidgets import QApplication
@@ -11,8 +9,8 @@ except ImportError:
     PyQt5 = None
 
 # https://en.wikipedia.org/wiki/Relative_luminance
-_luminance_multipliers = np.array([0.2126, 0.7152, 0.0722])
-_max_luminance = np.dot([255, 255, 255], _luminance_multipliers)
+_white_color = 255, 255, 255
+_luminance_multipliers = 0.2126, 0.7152, 0.0722
 _last_image_reference = None
 _color_converter = rgbxy.Converter()
 
@@ -45,26 +43,23 @@ def get_pixel_data(screen=None, region=None):
         raise Exception('no screenshot provider available')
 
 
-def get_average_color(data):
-    return tuple(np.average(data, axis=0).round().astype(int))
+def _get_absolute_luminance(color):
+    return sum(x * y for x, y in zip(color, _luminance_multipliers))
 
 
-def get_relative_brightness(data, ignore_black):
-    max_brightness = _max_luminance * data.shape[0]
-    luminance = np.dot(data, _luminance_multipliers)
-    absolute_brightness = np.sum(luminance, axis=0)
-
-    if ignore_black:
-        # Act like absolutely black pixels have a neutral effect on the absolute brightness by multiplying their amount
-        # with half of the maximum brightness
-        black_pixels = data.shape[0] - np.count_nonzero(luminance)
-        absolute_brightness += PHILIPS_MAX_BRIGHTNESS / 2 * black_pixels
-
-    return absolute_brightness / max_brightness
+_max_luminance = _get_absolute_luminance(_white_color)
 
 
-def rgb_to_xy(r, g, b):
+def get_relative_luminance(color):
+    return _get_absolute_luminance(color) / _max_luminance
+
+
+def get_average_color(data_matrix):
+    return tuple(np.average(data_matrix, axis=0).round().astype(int))
+
+
+def rgb_to_xy(color):
     # Prevent DivisionByZero exception in rgbxy library:
     # https://github.com/benknight/hue-python-rgb-converter/issues/6
-    r, g, b = tuple(max(component, 10 ** -3) for component in (r, g, b))
-    return _color_converter.rgb_to_xy(r, g, b)
+    color = tuple(max(component, 10 ** -3) for component in color)
+    return _color_converter.rgb_to_xy(*color)

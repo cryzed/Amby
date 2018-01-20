@@ -9,7 +9,7 @@ from qhue import QhueException
 
 from amby.config import get_saved_username, save_username
 from amby.constants import SUCCESS_EXIT_CODE, FAILURE_EXIT_CODE, PHILIPS_MAX_BRIGHTNESS, PHILIPS_MIN_BRIGHTNESS
-from amby.core import get_average_color, get_pixel_data, get_relative_brightness, rgb_to_xy
+from amby.core import get_average_color, get_pixel_data, rgb_to_xy, get_relative_luminance
 
 argument_parser = argparse.ArgumentParser()
 argument_parser.add_argument('bridge_address', help='The domain or IP address of the Philips Hue Bridge')
@@ -31,16 +31,11 @@ argument_parser.add_argument(
     help='Specify which percentage of brightest colors to average in luminance mode')
 argument_parser.add_argument(
     '--change-brightness', '-b', action='store_true',
-    help='Adjust brightness of lights based on the overall relative luminance of the specified region. '
-         'Very CPU intensive!')
+    help='Adjust brightness of lights based on the overall relative luminance of the specified screen')
 argument_parser.add_argument(
-    '--min-brightness', '-m', type=float, default=50, help='Minimum brightness in percent')
+    '--min-brightness', '-m', type=float, default=0, help='Minimum brightness in percent')
 argument_parser.add_argument(
     '--max-brightness', '-M', type=float, default=100, help='Maximum brightness in percent')
-argument_parser.add_argument(
-    '--dont-ignore-black', '-B', dest='ignore_black', action='store_false',
-    help="Don't ignore absolutely black pixels. Absolutely black pixels are ignored by default because of the black "
-         "bars added by video players if the aspect ratio doesn't match, which skews the results")
 
 
 def stderr(*args, **kwargs):
@@ -86,11 +81,10 @@ def _main(arguments):
             data = get_pixel_data(arguments.screen)
             color = get_average_color(data)
             if color != previous_color:
-                state = {'xy': rgb_to_xy(*color)}
+                state = {'xy': rgb_to_xy(color)}
                 if arguments.change_brightness:
-                    state['bri'] = max(
-                        min_brightness,
-                        int(round(get_relative_brightness(data, arguments.ignore_black) * max_brightness)))
+                    state['bri'] = max(min_brightness, int(round(get_relative_luminance(color) * max_brightness)))
+
                 change_light_states(state)
 
             if arguments.run_once:
