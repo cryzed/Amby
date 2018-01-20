@@ -27,11 +27,8 @@ argument_parser.add_argument(
     help='The interval to wait before calculating and setting the ambient color again')
 argument_parser.add_argument('--run-once', '-o', action='store_true', help='Set the ambient color once and exit')
 argument_parser.add_argument(
-    '--luminance-percentage', '-l', type=float, default='10',
-    help='Specify which percentage of brightest colors to average in luminance mode')
-argument_parser.add_argument(
     '--change-brightness', '-b', action='store_true',
-    help='Adjust brightness of lights based on the overall relative luminance of the specified screen')
+    help='Adjust brightness of lights based on the luminance of the calculated ambient color')
 argument_parser.add_argument(
     '--min-brightness', '-m', type=float, default=0, help='Minimum brightness in percent')
 argument_parser.add_argument(
