@@ -12,7 +12,7 @@ def get_saved_username():
     if not os.path.exists(_username_path):
         return None
 
-    with open(_username_path, 'r', encoding=ENCODING) as file:
+    with open(_username_path, encoding=ENCODING) as file:
         # Strip trailing whitespace just in case the user decides to modify the file manually
         return file.read().strip()
 

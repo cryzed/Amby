@@ -54,8 +54,8 @@ def get_relative_luminance(color):
     return _get_absolute_luminance(color) / _max_luminance
 
 
-def get_average_color(data_matrix):
-    return tuple(np.average(data_matrix, axis=0).round().astype(int))
+def get_average_color(data):
+    return tuple(np.average(data, axis=0).round().astype(int))
 
 
 def rgb_to_xy(color):

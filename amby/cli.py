@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import argparse
 import sys
 import time
@@ -41,21 +39,19 @@ def stderr(*args, **kwargs):
 
 
 def prompt_create_username(bridge_address):
-    choice = input(f'No username specified, do you want to create one now? [Y/n]: ')
-    if choice.lower() not in {'', 'y', 'yes'}:
-        return None
-
-    try:
-        return qhue.create_new_username(bridge_address)
-    except QhueException as exception:
-        stderr(f'Exception occurred while creating the username: {exception}')
+    choice = input('No username specified, do you want to create one now? [Y/n]: ')
+    if choice.lower() in {'', 'y', 'yes'}:
+        try:
+            return qhue.create_new_username(bridge_address)
+        except QhueException as exception:
+            stderr(f'Exception occurred while creating the username: {exception}')
 
 
 def _main(arguments):
     username = arguments.username or get_saved_username()
     if not username:
         username = prompt_create_username(arguments.bridge_address)
-        if username is None:
+        if not username:
             return FAILURE_EXIT_CODE
         save_username(username)
     bridge = qhue.Bridge(arguments.bridge_address, username)
