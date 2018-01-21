@@ -6,8 +6,11 @@ import qhue
 from qhue import QhueException
 
 from amby.config import get_saved_username, save_username
-from amby.constants import SUCCESS_EXIT_CODE, FAILURE_EXIT_CODE, PHILIPS_MAX_BRIGHTNESS, PHILIPS_MIN_BRIGHTNESS
+from amby.constants import PHILIPS_MAX_BRIGHTNESS, PHILIPS_MIN_BRIGHTNESS
 from amby.core import get_average_color, get_pixel_data, rgb_to_xy, get_relative_luminance
+
+SUCCESS_EXIT_CODE = 0
+FAILURE_EXIT_CODE = 1
 
 argument_parser = argparse.ArgumentParser()
 argument_parser.add_argument('bridge_address', help='The domain or IP address of the Philips Hue Bridge')
@@ -47,7 +50,7 @@ def prompt_create_username(bridge_address):
             stderr(f'Exception occurred while creating the username: {exception}')
 
 
-def _main(arguments):
+def main_(arguments):
     username = arguments.username or get_saved_username()
     if not username:
         username = prompt_create_username(arguments.bridge_address)
@@ -92,4 +95,4 @@ def _main(arguments):
 
 def main():
     arguments = argument_parser.parse_args()
-    argument_parser.exit(_main(arguments))
+    argument_parser.exit(main_(arguments))

@@ -8,9 +8,10 @@ try:
 except ImportError:
     PyQt5 = None
 
+_WHITE_COLOR_RGB = 255, 255, 255
 # https://en.wikipedia.org/wiki/Relative_luminance
-_white_color = 255, 255, 255
-_luminance_multipliers = 0.2126, 0.7152, 0.0722
+_LUMINANCE_MULTIPLIERS = 0.2126, 0.7152, 0.0722
+
 _last_image_reference = None
 _color_converter = rgbxy.Converter()
 
@@ -44,10 +45,10 @@ def get_pixel_data(screen=None, region=None):
 
 
 def _get_absolute_luminance(color):
-    return sum(x * y for x, y in zip(color, _luminance_multipliers))
+    return sum(x * y for x, y in zip(color, _LUMINANCE_MULTIPLIERS))
 
 
-_max_luminance = _get_absolute_luminance(_white_color)
+_max_luminance = _get_absolute_luminance(_WHITE_COLOR_RGB)
 
 
 def get_relative_luminance(color):
