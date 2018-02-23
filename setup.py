@@ -5,7 +5,7 @@ setup(
     version='1.2',
     packages=find_packages(),
     url='https://github.com/cryzed/Amby',
-    license='MIT',
+    license='GPLv3',
     author='Chris Braun',
     author_email='cryzed@googlemail.com',
     description='Ambient Lighting for the Philips Hue Bridge on Linux',
