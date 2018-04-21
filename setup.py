@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='Amby',
-    version='1.2',
+    version='1.3',
     packages=find_packages(),
     url='https://github.com/cryzed/Amby',
     license='GPLv3',

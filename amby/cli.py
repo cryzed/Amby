@@ -1,4 +1,5 @@
 import argparse
+import atexit
 import sys
 import time
 
@@ -6,8 +7,8 @@ import qhue
 from qhue import QhueException
 
 from amby.config import get_saved_username, save_username
-from amby.constants import PHILIPS_MAX_BRIGHTNESS, PHILIPS_MIN_BRIGHTNESS
-from amby.core import get_average_color, get_pixel_data, rgb_to_xy, get_relative_luminance
+from amby.constants import NON_MODIFIABLE_STATES, PHILIPS_MAX_BRIGHTNESS, PHILIPS_MIN_BRIGHTNESS
+from amby.core import get_average_color, get_pixel_data, get_relative_luminance, rgb_to_xy
 
 SUCCESS_EXIT_CODE = 0
 FAILURE_EXIT_CODE = 1
@@ -34,6 +35,8 @@ argument_parser.add_argument(
     '--min-brightness', '-m', type=float, default=0, help='Minimum brightness in percent')
 argument_parser.add_argument(
     '--max-brightness', '-M', type=float, default=100, help='Maximum brightness in percent')
+argument_parser.add_argument('--enable', '-e', action='store_true', help='Enable disabled lights')
+argument_parser.add_argument('--restore-state', '-r', action='store_true', help='Restore initial state of lights')
 
 
 def stderr(*args, **kwargs):
@@ -50,6 +53,17 @@ def prompt_create_username(bridge_address):
             stderr(f'Exception occurred while creating the username: {exception}')
 
 
+def change_light_state(bridge, light, state):
+    for key in NON_MODIFIABLE_STATES:
+        if key in state:
+            del state[key]
+
+    try:
+        bridge.lights[light].state(**state)
+    except QhueException as exception:
+        stderr(f'Exception occurred while controlling light #{light}: {exception}')
+
+
 def main_(arguments):
     username = arguments.username or get_saved_username()
     if not username:
@@ -59,12 +73,19 @@ def main_(arguments):
         save_username(username)
     bridge = qhue.Bridge(arguments.bridge_address, username)
 
-    def change_light_states(state):
-        for light in arguments.lights:
-            try:
-                bridge.lights[light].state(**state)
-            except QhueException as exception:
-                stderr(f'Exception occurred while controlling light #{light}: {exception}')
+    initial_states = {}
+    for light in arguments.lights:
+        state = bridge.lights[light]()['state']
+        initial_states[light] = state
+        if arguments.enable and not state['on']:
+            bridge.lights[light].state(on=True)
+
+    if arguments.restore_state:
+        def restore_state():
+            for light, state in initial_states.items():
+                change_light_state(bridge, light, state)
+
+        atexit.register(restore_state)
 
     previous_color = None
     min_brightness = max(PHILIPS_MIN_BRIGHTNESS, int(round(arguments.min_brightness / 100 * PHILIPS_MAX_BRIGHTNESS)))
@@ -81,7 +102,8 @@ def main_(arguments):
                 if arguments.change_brightness:
                     state['bri'] = max(min_brightness, int(round(get_relative_luminance(color) * max_brightness)))
 
-                change_light_states(state)
+                for light in arguments.lights:
+                    change_light_state(bridge, light, state)
 
             if arguments.run_once:
                 break
